@@ -17,22 +17,10 @@ class Member(models.Model):
     gender = models.CharField(max_length=10, choices=[('Nam','Nam'),('Nữ','Nữ')])
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True)
     group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True)
-    status = models.CharField(
-        max_length=50,
-        choices=[
-            ('Còn hoạt động','Còn hoạt động'),
-            ('Hưu','Hưu'),
-            ('Ngưng hoạt động','Ngưng hoạt động'),
-        ],
-        null=True,
-        blank=True
-    )
+    status = models.CharField(max_length=50)
     note = models.CharField(
         max_length=50,
         choices=[
-            ('Chủ tịch BCH CĐCS','Chủ tịch BCH CĐCS'),
-            ('Phó chủ tịch BCH CĐCS','Phó chủ tịch BCH CĐCS'),
-            ('Uỷ viên BCH CĐCS','Uỷ viên BCH CĐCS'),
             ('Tổ trưởng', 'Tổ trưởng'),
             ('Tổ phó', 'Tổ phó'),
             ('Người lao động', 'Người lao động'),

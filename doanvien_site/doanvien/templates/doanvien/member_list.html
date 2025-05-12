@@ -6,16 +6,45 @@
 </head>
 <body class="bg-light">
 <div class="container py-5">
-    <h2 class="mb-4">📋 Danh sách Đoàn viên</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📋 Danh sách Đoàn viên</h2>
+        <a href="{% url 'add-member' %}" class="btn btn-primary">Thêm Đoàn viên</a>
+        <a href="{% url 'export-member-list' %}" class="btn btn-success">⬇️ Xuất Excel</a>
+        <a href="{% url 'member-stats' %}" class="btn btn-secondary">📊 Thống kê</a>
+    </div>
 
     <form method="GET" class="mb-3 row">
-        <div class="col-md-10">
+        <div class="col-md-4">
             <input type="text" name="q" class="form-control" placeholder="Tìm theo tên..." value="{{ search }}">
         </div>
+    
+        <div class="col-md-3">
+            <select name="department" class="form-select">
+                <option value="">--- Chọn Khoa/Phòng ---</option>
+                {% for dept in departments %}
+                    <option value="{{ dept.id }}" {% if dept.id|stringformat:"s" == selected_department %}selected{% endif %}>
+                        {{ dept.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    
+        <div class="col-md-3">
+            <select name="group" class="form-select">
+                <option value="">--- Chọn Tổ công đoàn ---</option>
+                {% for grp in groups %}
+                    <option value="{{ grp.id }}" {% if grp.id|stringformat:"s" == selected_group %}selected{% endif %}>
+                        {{ grp.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    
         <div class="col-md-2">
-            <button class="btn btn-outline-primary w-100">Tìm kiếm</button>
+            <button class="btn btn-outline-primary w-100">Lọc kết quả</button>
         </div>
     </form>
+    
 
     <table class="table table-bordered table-striped">
         <thead class="table-dark">
@@ -27,6 +56,7 @@
                 <th>Tổ</th>
                 <th>Tình trạng</th>
                 <th>Ghi chú</th>
+                <th>Hành động</th>
             </tr>
         </thead>
         <tbody>
@@ -39,6 +69,10 @@
                 <td>{{ member.group.name }}</td>
                 <td>{{ member.status }}</td>
                 <td>{{ member.note|default:"" }}</td>
+                <td>
+                    <a href="{% url 'edit-member' member.id %}" class="btn btn-sm btn-warning">Sửa</a>
+                    <a href="{% url 'delete-member' member.id %}" class="btn btn-sm btn-danger">Xóa</a>
+                </td>    
             </tr>
             {% empty %}
             <tr>
