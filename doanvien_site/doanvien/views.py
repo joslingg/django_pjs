@@ -6,6 +6,7 @@ from .models import Member,Department,Group
 from django.db.models import Count
 import openpyxl
 from openpyxl.styles import Font
+import pandas as pd
 
 def home(request):
     return HttpResponse("<h2>Chào bạn đến với hệ thống quản lý Đoàn viên!</h2>")
@@ -120,3 +121,31 @@ def export_member_list(request):
     wb.save(response)
 
     return response
+
+from .models import Department, Group, Member
+
+def import_member_from_excel(request):
+    if request.method == 'POST':
+        excel_file = request.FILES['file']
+        df = pd.read_excel(excel_file)
+        
+        for _, row in df.iterrows():
+            # Lấy đối tượng Department, nếu chưa có thì tạo mới
+            department, _ = Department.objects.get_or_create(name=row['KHOA'])
+            # Lấy đối tượng Group, nếu chưa có thì tạo mới
+            group, _ = Group.objects.get_or_create(name=row['TO'])
+            
+            # Kiểm tra giá trị của "NOTE" có khớp với choices hay không
+            note_value = row['GHI_CHU'] if row['GHI_CHU'] in dict(Member._meta.get_field('note').choices) else None
+            
+            # Tạo mới Member
+            Member.objects.create(
+                name=row['TEN'],
+                gender=row['GIOI_TINH'],
+                department=department,   # Gán ForeignKey
+                group=group,             # Gán ForeignKey
+                status=row['TINH_TRANG'],
+                note=note_value          # Gán giá trị note
+            )
+        return redirect('member-list')
+    return render(request, 'doanvien/import_members.html')
