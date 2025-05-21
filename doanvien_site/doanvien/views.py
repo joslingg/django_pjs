@@ -16,7 +16,7 @@ def add_member(request):
         form = MemberForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('/')
+            return redirect('member-list')
     else:
          form = MemberForm()
     return render(request, 'doanvien/add_member.html',{'form':form})
@@ -25,6 +25,11 @@ def member_list(request):
     search = request.GET.get('q','')
     department_filter = request.GET.get('department','')
     group_filter = request.GET.get('group','')
+    status_filter = request.GET.get('status','')
+    note_filter = request.GET.get('note','')
+    
+    sort = request.GET.get('sort','name')
+    direction = request.GET.get('direction','asc')
     
     members = Member.objects.all()
     if search:
@@ -36,8 +41,22 @@ def member_list(request):
     if group_filter:
         members = members.filter(group_id=group_filter)
         
+    if status_filter:
+        members = members.filter(status = status_filter)
+        
+    if note_filter:
+        members = members.filter(note = note_filter)
+    
+    if direction == 'desc':
+        members = members.order_by(f'-{sort}')
+    else:
+        members = members.order_by(sort)
+        
     departments = Department.objects.all()
     groups = Group.objects.all()
+    
+    status_choices = [choice[0] for choice in Member._meta.get_field('status').choices]
+    note_choices = [choice[0] for choice in Member._meta.get_field('note').choices]
        
     return render(request, 'doanvien/member_list.html',{
         'members':members,
@@ -46,6 +65,13 @@ def member_list(request):
         'groups': groups,
         'selected_department': department_filter,
         'selected_group': group_filter,
+        'selected_status': status_filter,
+        'statuses': status_choices,
+        'selected_note': note_filter,
+        'notes': note_choices,
+        'query_string': request.GET.urlencode(),
+        'current_sort': sort,
+        'current_direction': direction,
     })
     
 def edit_member(request,pk):
@@ -54,7 +80,7 @@ def edit_member(request,pk):
         form = MemberForm(request.POST, instance=member)
         if form.is_valid():
             form.save()
-            return redirect('/')
+            return redirect('member-list')
         else:   
             return render(request, 'doanvien/edit_member.html',{'form':form,'member':member})
     else:
@@ -66,7 +92,7 @@ def delete_member(request,pk):
     member = get_object_or_404(Member,pk=pk)
     if request.method == 'POST':
         member.delete()
-        return redirect('/')
+        return redirect('member-list')
 
     return render(request,'doanvien/delete_member.html',{'member':member})
 
@@ -149,3 +175,19 @@ def import_member_from_excel(request):
             )
         return redirect('member-list')
     return render(request, 'doanvien/import_members.html')
+
+def download_template(quest):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Temlate Import"
+    
+    headers = ['TEN', 'GIOI_TINH', 'KHOA', 'TO', 'TINH_TRANG', 'GHI_CHU']
+    ws.append(headers)
+    
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+        
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=import_template.xlsx'
+    wb.save(response)
+    return response
